@@ -28,11 +28,11 @@ class Vehicle {
     this.followPathWeight = 2;
     this.separateWeight = 1.2;
 
-     // pour comportement wander
+     // pour comportement wander (Craig Reynolds GDC 1999, identique à 4-Wander)
      this.distanceCercle = 100;
      this.wanderRadius = 40;
-     this.wanderTheta = PI/2;
-     this.displaceRange = random(-0.3, 0.3);
+     this.wanderTheta = random(TWO_PI);
+     this.displaceRange = 0.3;
  
      // trainée derrière les véhicules
      this.pathMaxLength = 20;
@@ -71,6 +71,7 @@ class Vehicle {
   // Main "run" function
   run() {
     this.update();
+    this.edges();
     this.render();
   }
 
@@ -210,65 +211,79 @@ class Vehicle {
   }
 
   wander() {
-    // point devant le véhicule, centre du cercle
-    let wanderPoint = this.vel.copy();
-    wanderPoint.setMag(this.distanceCercle);
-    wanderPoint.add(this.pos);
+    // 1. Centre du cercle projeté à distanceCercle devant le véhicule
+    const forward = this.vel.magSq() > 1e-4
+      ? this.vel.copy().normalize()
+      : createVector(1, 0);
+    const pointDevant = p5.Vector.mult(forward, this.distanceCercle).add(this.pos);
 
-    if (Vehicle.debug) {
-      // on le dessine sous la forme d'une petit cercle rouge
-      fill(255, 0, 0);
-      noStroke();
-      circle(wanderPoint.x, wanderPoint.y, 8);
+    // 2. Point cible sur le cercle de rayon wanderRadius
+    const heading = this.vel.magSq() > 1e-4 ? this.vel.heading() : 0;
+    const theta = this.wanderTheta + heading;
+    const pointSurLeCercle = createVector(
+      pointDevant.x + this.wanderRadius * Math.cos(theta),
+      pointDevant.y + this.wanderRadius * Math.sin(theta)
+    );
 
-      // Cercle autour du point
-      noFill();
-      stroke(0);
-      circle(wanderPoint.x, wanderPoint.y, this.wanderRadius * 2);
-
-      // on dessine une ligne qui relie le vaisseau à ce point
-      // c'est la ligne blanche en face du vaisseau
-      line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y);
-    }
-
-    // On va s'occuper de calculer le point vert SUR LE CERCLE
-    // il fait un angle wanderTheta avec le centre du cercle
-    // l'angle final par rapport à l'axe des X c'est l'angle du vaisseau
-    // + cet angle
-    let theta = this.wanderTheta + this.vel.heading();
-
-    let x = this.wanderRadius * cos(theta);
-    let y = this.wanderRadius * sin(theta);
-
-    // maintenant wanderPoint c'est un point sur le cercle
-    wanderPoint.add(x, y);
-
-    if (Vehicle.debug) {
-      // on le dessine sous la forme d'un cercle vert
-      fill(0, 255, 0);
-      noStroke();
-      circle(wanderPoint.x, wanderPoint.y, 16);
-
-      // on dessine le vecteur desiredSpeed qui va du vaisseau au point vert
-      stroke(0);
-      line(this.pos.x, this.pos.y, wanderPoint.x, wanderPoint.y);
-    }
-    // On a donc la vitesse désirée que l'on cherche qui est le vecteur
-    // allant du vaisseau au cercle vert. On le calcule :
-    // ci-dessous, steer c'est la desiredSpeed directement !
-    // Voir l'article de Craig Reynolds, Daniel Shiffman s'est trompé
-    // dans sa vidéo, on ne calcule pas la formule classique
-    // force = desiredSpeed - vitesseCourante, mais ici on a directement
-    // force = desiredSpeed
-    let steer = wanderPoint.sub(this.pos);
-
-    steer.setMag(this.maxForce);
-    
-
-    // On déplace le point vert sur le cerlcle (en radians)
+    // 3. Perturbation aléatoire bornée de l'angle pour la frame suivante
     this.wanderTheta += random(-this.displaceRange, this.displaceRange);
 
-    return steer;
+    // 4. Force de steering directe : vecteur du véhicule vers le point sur le cercle, borné par maxForce
+    const force = p5.Vector.sub(pointSurLeCercle, this.pos);
+    force.limit(this.maxForce);
+
+    if (Vehicle.debug && this.wanderWeight > 0) {
+      this.drawWanderDebug(pointDevant, pointSurLeCercle, force);
+    }
+
+    return force;
+  }
+
+  drawWanderDebug(pointDevant, pointSurLeCercle, steeringForce) {
+    push();
+
+    // Ligne pointillée de distance vers le centre du cercle
+    stroke(60, 60, 60, 140);
+    strokeWeight(1.5);
+    drawingContext.setLineDash([5, 8]);
+    line(this.pos.x, this.pos.y, pointDevant.x, pointDevant.y);
+    drawingContext.setLineDash([]);
+
+    // Cercle de Wander
+    noFill();
+    stroke(40, 40, 40, 180);
+    strokeWeight(1.5);
+    circle(pointDevant.x, pointDevant.y, this.wanderRadius * 2);
+
+    // Centre du cercle (rouge)
+    noStroke();
+    fill(239, 68, 68);
+    circle(pointDevant.x, pointDevant.y, 8);
+
+    // Rayon interne vers le point cible
+    stroke(100, 116, 139, 180);
+    strokeWeight(1);
+    line(pointDevant.x, pointDevant.y, pointSurLeCercle.x, pointSurLeCercle.y);
+
+    // Vecteur direction (véhicule -> point sur le cercle)
+    stroke(234, 179, 8, 200);
+    strokeWeight(1.5);
+    line(this.pos.x, this.pos.y, pointSurLeCercle.x, pointSurLeCercle.y);
+
+    // Point cible sur le cercle (vert)
+    noStroke();
+    fill(34, 197, 94);
+    circle(pointSurLeCercle.x, pointSurLeCercle.y, 12);
+
+    // Flèche de force de steering (orange)
+    if (steeringForce.magSq() > 1e-6) {
+      const scaled = p5.Vector.mult(steeringForce, 160);
+      stroke(249, 115, 22);
+      strokeWeight(2);
+      line(this.pos.x, this.pos.y, this.pos.x + scaled.x, this.pos.y + scaled.y);
+    }
+
+    pop();
   }
 
 

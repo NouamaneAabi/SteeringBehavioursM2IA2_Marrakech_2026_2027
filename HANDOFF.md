@@ -609,3 +609,25 @@ Avant toute modification de code :
   - En attente de retours de test sur `5-3-PathFollowingComplex/index.html` ou de nouvelles tâches.
 - **Points d'attention / bugs connus** :
   - Aucun bug connu ; 6/6 tests unitaires passent.
+
+### Passation #26 — 2026-11-24
+- **Assistant sortant** : Gemini
+- **Travail effectué** :
+  - Portage du comportement `wander()` de `4-Wander` dans `5-3-PathFollowingComplex/vehicle.js` :
+    - `wander()` (Craig Reynolds GDC 1999 : cercle projeté, point sur le cercle, force directe `pointSurLeCercle - pos` bornée par `maxForce`), `drawWanderDebug()`, `displaceRange = 0.3` positif, et ajout de `this.edges()` dans `run()`.
+    - Touche `W` / `w` dans `5-3-PathFollowingComplex/sketch.js` crée un véhicule vert avec `wanderWeight = 1`.
+  - Refonte de la UI de `5-3-PathFollowingComplex` (`index.html`, `style.css`, `sketch.js`, `path.js`) :
+    - Réactivation de `bindSnakeControls()` et `newSnake(...)` dans `setup()` (qui étaient commentés, empêchant le curseur `Largeur du circuit` de fonctionner), et ajout d'un panneau flottant repliable en haut à droite avec le bouton **+ Créer un serpent (T)** et la checkbox **Mode Debug (touche D)** synchronisée avec `D`/`d`.
+  - Vérification syntaxique (`node --check`), exécution des 6 tests unitaires (`node --test 5-3-PathFollowingComplex/tests/*.test.mjs`, 6/6 passés), mise à jour de `README.md` et `HANDOFF.md`, puis commit & push.
+- **Fichiers créés / modifiés** :
+  - `5-3-PathFollowingComplex/vehicle.js`
+  - `5-3-PathFollowingComplex/path.js`
+  - `5-3-PathFollowingComplex/index.html`
+  - `5-3-PathFollowingComplex/style.css`
+  - `5-3-PathFollowingComplex/sketch.js`
+  - `README.md`
+  - `HANDOFF.md`
+- **Prochaines étapes** :
+  - En attente de retours de test sur `5-3-PathFollowingComplex/index.html` ou de nouvelles tâches.
+- **Points d'attention / bugs connus** :
+  - Aucun bug connu ; 6/6 tests unitaires passent.

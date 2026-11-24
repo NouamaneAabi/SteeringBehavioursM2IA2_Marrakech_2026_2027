@@ -27,7 +27,7 @@ let snakeSize = 22;
 let entitySpacing = 24;
 
 function setup() {
-  createCanvas(1200, 800);
+  createCanvas(windowWidth, windowHeight);
   // la fonction suivante créer un chemin composé de plusieurs points
   newPath();
 
@@ -37,8 +37,8 @@ function setup() {
   for (let i = 0; i < nbVehicules; i++) {
     newVehicle(random(width), random(height));
   }
-  //newSnake(path.points[0].x, path.points[0].y);
-  //bindSnakeControls();
+  newSnake(path.points[0].x, path.points[0].y);
+  bindSnakeControls();
 }
 
 function draw() {
@@ -119,6 +119,36 @@ function bindSnakeControls() {
     el.addEventListener('input', synchronize);
     el.addEventListener('change', synchronize);
   }
+
+  const addSnakeBtn = document.getElementById('add-snake-btn');
+  if (addSnakeBtn) {
+    addSnakeBtn.addEventListener('click', () => {
+      const startPt = path?.points?.[0];
+      const sx = startPt ? startPt.x : width * 0.5;
+      const sy = startPt ? startPt.y : height * 0.5;
+      newSnake(sx, sy);
+    });
+  }
+
+  const toggleBtn = document.getElementById('controls-toggle');
+  const controlsPanel = document.getElementById('controls');
+  if (toggleBtn && controlsPanel) {
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = !controlsPanel.classList.toggle('controls--collapsed');
+      toggleBtn.textContent = isOpen ? 'Masquer' : 'Afficher';
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+  }
+
+  const debugToggle = document.getElementById('debug-toggle');
+  if (debugToggle) {
+    debugToggle.checked = debug;
+    debugToggle.addEventListener('change', () => {
+      debug = debugToggle.checked;
+      Vehicle.debug = debug;
+    });
+  }
+
   synchronize();
 }
 
@@ -170,25 +200,32 @@ function newVehicle(x, y) {
 
 function keyPressed(event) {
   if (document.activeElement?.matches('input, select, textarea')) return;
-  if (key.toLowerCase() == "t") {
+  const pressed = key.toLowerCase();
+  if (pressed === "t") {
     if (!event?.repeat) newSnake(constrain(mouseX, 0, width), constrain(mouseY, 0, height));
-  } else if (key == "d") {
+  } else if (pressed === "d") {
     debug = !debug;
     Vehicle.debug = debug;
-  } else if(key == "s") {
+    const debugToggle = document.getElementById('debug-toggle');
+    if (debugToggle) debugToggle.checked = debug;
+  } else if (pressed === "s") {
     let v = newVehicle(mouseX, mouseY);
     v.maxSpeed = 7;
-    v.couleur = "red"
-  } else if (key == "w") {
-    // on cree un véhicule wander
-    let v = new Vehicle(mouseX, mouseY, 2, 0.25);
+    v.couleur = "red";
+  } else if (pressed === "w") {
+    // Création d'un véhicule vert avec comportement Wander de Craig Reynolds
+    let v = new Vehicle(mouseX, mouseY, 4, 0.2);
     v.wanderWeight = 1;
     v.followPathWeight = 0;
     v.separateWeight = 0;
-    v.r = 30;
+    v.r = 28;
     v.couleur = "lightgreen";
     vehicles.push(v);
   }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
 
 function mouseDragged(event) {
