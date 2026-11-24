@@ -46,17 +46,17 @@ class Vehicle {
     let f = this.follow(path);
     // separation des autres véhicules, le resultat est la force s
     let s = this.separate(vehicles);
-    //let w = this.wander();
+    let w = this.wander();
 
     // On fait une somme pondérée des deux forces
     f.mult(this.followPathWeight);
     s.mult(this.separateWeight); // essayez zéro ici !!!!
-    //w.mult(this.wanderWeight);
+    w.mult(this.wanderWeight);
 
     // On applique les forces au véhicule
     this.applyForce(f);
     this.applyForce(s);
-    //this.applyForce(w);
+    this.applyForce(w);
   }
 
   applyForce(force) {

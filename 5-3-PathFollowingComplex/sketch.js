@@ -217,7 +217,7 @@ function keyPressed(event) {
     let v = new Vehicle(mouseX, mouseY, 4, 0.2);
     v.wanderWeight = 1;
     v.followPathWeight = 0;
-    v.separateWeight = 0;
+    v.separateWeight = 2;
     v.r = 28;
     v.couleur = "lightgreen";
     vehicles.push(v);
@@ -230,5 +230,6 @@ function windowResized() {
 
 function mouseDragged(event) {
   if (event?.target?.closest?.('#controls')) return;
-  if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) newVehicle(mouseX, mouseY);
+  if (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height) 
+    newVehicle(mouseX, mouseY);
 }
