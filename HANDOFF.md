@@ -590,3 +590,22 @@ Avant toute modification de code :
   - Tester `4-Wander/index.html` (notamment en mode debug avec la touche `D`), ou ajouter de nouvelles tâches dans `4-Wander/`.
 - **Points d'attention / bugs connus** :
   - Aucun bug connu ; prêt pour test utilisateur dans le navigateur (`4-Wander/index.html`).
+
+### Passation #25 — 2026-11-24
+- **Assistant sortant** : Gemini
+- **Travail effectué** :
+  - Mise à jour de `5-3-PathFollowingComplex/` :
+    - `5-3-PathFollowingComplex/index.html`, `sketch.js` : ajout des écouteurs `input` + `change` sur tous les curseurs UI (dont `circuit-width` pour la largeur du circuit) et protection de `mouseDragged()` pour ne pas créer de véhicules lors du glissement sur `#controls`.
+    - `5-3-PathFollowingComplex/vehicle.js` (`separate()`), `snakePathFollowing.js` (`setSeparationDistance()`), `index.html` & `sketch.js` : ajout du curseur **Espacement entre entités** (`#entity-spacing`, `10..120` px, défaut `24` px) réglant dynamiquement `separationDistance` pour tous les véhicules et serpents (existants et nouveaux).
+  - Vérification syntaxique (`node --check`), exécution des 6 tests unitaires (`node --test 5-3-PathFollowingComplex/tests/*.test.mjs`, 6/6 passés) et mise à jour de `README.md`.
+- **Fichiers créés / modifiés** :
+  - `5-3-PathFollowingComplex/index.html`
+  - `5-3-PathFollowingComplex/vehicle.js`
+  - `5-3-PathFollowingComplex/snakePathFollowing.js`
+  - `5-3-PathFollowingComplex/sketch.js`
+  - `README.md`
+  - `HANDOFF.md`
+- **Prochaines étapes** :
+  - En attente de retours de test sur `5-3-PathFollowingComplex/index.html` ou de nouvelles tâches.
+- **Points d'attention / bugs connus** :
+  - Aucun bug connu ; 6/6 tests unitaires passent.

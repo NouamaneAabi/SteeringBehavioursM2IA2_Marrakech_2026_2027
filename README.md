@@ -28,11 +28,20 @@ Ensemble d'applications et d'exercices interactifs en **p5.js** mettant en œuvr
 | Dossier | Description | Fichiers principaux |
 | --- | --- | --- |
 | `1-Seek/` | Comportement de base **Seek** & **Flee** vers une cible | `sketch.js`, `soundEngine.js`, `target.js`, `targetFragment.js`, `test.js`, `vehicle.js` |
+| `10-missiles genetic algo/` | Sketch p5.js `10-missiles genetic algo` | `dna.js`, `obstacle.js`, `population.js`, `rocket.js`, `sketch.js` |
 | `2-PursueEvade/` | Comportements **Pursuit** & **Evasion** avec cible mobile | `attackerPlane.js`, `battlePlane.js`, `bouncingBall.js`, `explosionParticle.js`, `flare.js`, `missile.js`, `plane.js`, `sketch.js`, `smokePuff.js`, `target.js`, `targetPlane.js`, `vehicle.js` |
 | `2-PursueEvade_correction/` | Correction de **Pursuit** & **Evasion** | `bouncingBall.js`, `sketch.js`, `target.js`, `vehicle.js` |
 | `3-Arrival/` | Comportement **Arrival** avec zone de freinage | `cockroachLeader.js`, `cockroachMissile.js`, `cockroachSoldier.js`, `food.js`, `gridShaderLayer.js`, `ringHitEffect.js`, `sketch.js`, `snake.js`, `snakeHead.js`, `snakeRing.js`, `snakeShaderTexture.js`, `textFragment.js`, `texteAnime.js`, `vehicle.js` |
 | `3-Arrival_correction/` | Correction **Arrival** + démonstrations `Snake` / `SnakeWander` | `sketch.js`, `snake.js`, `snakeWander.js`, `vehicle.js` |
 | `4-Wander/` | Comportement **Wander** avec traînée et sprite | `sketch.js`, `vehicle.js` |
+| `5-1-ScalarProjection/` | Sketch p5.js `5-1-ScalarProjection` | `sketch.js` |
+| `5-2-PathFollowing/` | Sketch p5.js `5-2-PathFollowing` | `path.js`, `sketch.js`, `vehicle.js` |
+| `5-3-PathFollowingComplex/` | Sketch p5.js `5-3-PathFollowingComplex` | `path.js`, `sketch.js`, `snake.js`, `snakePathFollowing.js`, `snakeSegment.js`, `vehicle.js` |
+| `6-ObstacleAvoidance/` | Sketch p5.js `6-ObstacleAvoidance` | `obstacle.js`, `sketch.js`, `vehicle.js` |
+| `7-Boids/` | Sketch p5.js `7-Boids` | `boids.js`, `obstacle.js`, `sketch.js` |
+| `8-EvolutionarySteeringBehavior/` | Sketch p5.js `8-EvolutionarySteeringBehavior` | `sketch.js`, `vehicle.js` |
+| `9-VoitureSuitCircuit genetic algo/` | Sketch p5.js `9-VoitureSuitCircuit genetic algo` | `boundary.js`, `ga.js`, `nn.js`, `ray.js`, `sketch.js`, `vehicle.js` |
+| `9b - Voiture suit circuit version 2/` | Sketch p5.js `9b - Voiture suit circuit version 2` | — |
 <!-- AUTO-GENERATED:SKETCHES:END -->
 
 ---
@@ -52,6 +61,7 @@ Puis ouvrir `http://localhost:8000/1-Seek/` (ou le dossier de votre choix) dans 
 ## Journal des évolutions récentes
 
 <!-- AUTO-GENERATED:CHANGELOG:START -->
+- **2026-11-24** : Mise à jour de `5-3-PathFollowingComplex` : correction des événements UI (largeur du circuit, protection contre le drag dans `#controls`), ajout du curseur **Espacement entre entités** (`10..120` px) pilotant `separationDistance` sur les véhicules et les serpents.
 - **2026-11-24** : Implémentation canonique de **Wander** (Craig Reynolds GDC 1999) dans `4-Wander` (`4-specification.md`) : pipeline `applyBehaviors()` → `applyForce()` → `update()`, visualisation debug complète (cercle, distance, rayon, point cible, direction désirée, force de steering, vitesse) et panneau de contrôle repliable.
 - **2026-11-24** : Implémentation de la **tâche 5** de `3-Arrival` : escadron de cafards mangeables (`CockroachLeader` + `CockroachSoldier` en formation 4×4 avec zone d'exclusion devant le leader), tir périodique de missiles (`CockroachMissile` en `seek` sur les anneaux du serpent, `RingHitEffect` et perte d'anneau ou mort à la tête), objectif de longueur par niveau et opacité de la grille à `100%`.
 - **2026-11-24** : Implémentation de la **tâche 4** de `3-Arrival` : tête du serpent expressive (`SnakeHead` avec yeux suivant la souris + langue fourchue animée), classe `Food` (`extends Vehicle`, nourriture flottante allongeant le serpent à l'impact) et système de niveaux chronométrés (`"Niveau N"` au centre, couleur de grille par niveau, objectif croissant et HUD).
