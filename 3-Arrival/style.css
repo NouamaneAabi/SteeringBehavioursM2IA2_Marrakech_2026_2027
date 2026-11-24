@@ -1,8 +1,144 @@
 html, body {
   margin: 0;
   padding: 0;
+  background: #050814;
+  font-family: sans-serif;
 }
 
 canvas {
   display: block;
+}
+
+.controls {
+  position: fixed;
+  z-index: 10;
+  top: 12px;
+  right: 12px;
+  width: min(460px, calc(100vw - 24px));
+  color: #fff;
+  background: rgba(15, 15, 25, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  box-sizing: border-box;
+  backdrop-filter: blur(4px);
+}
+
+.controls__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+}
+
+.controls h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.controls__toggle {
+  padding: 5px 9px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.controls__toggle:hover,
+.controls__toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.controls__content {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+  padding: 0 12px 12px;
+}
+
+.controls__subgrid {
+  display: grid;
+  gap: 8px;
+}
+
+.controls--collapsed .controls__content {
+  display: none;
+}
+
+.controls__section-title {
+  margin: 6px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.controls__row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, 2fr) 56px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.controls__row input[type="range"] {
+  width: 100%;
+}
+
+.controls__row--field {
+  grid-template-columns: minmax(110px, 1fr) minmax(160px, 2fr);
+}
+
+.controls__row--color {
+  grid-template-columns: minmax(150px, 1fr) 48px 66px;
+}
+
+.controls__color {
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.controls__select,
+.controls__input {
+  width: 100%;
+  padding: 5px 8px;
+  color: #fff;
+  background: rgba(30, 30, 48, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.controls__value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.controls__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .controls__row {
+    grid-template-columns: 1fr 56px;
+  }
+
+  .controls__row input[type="range"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
