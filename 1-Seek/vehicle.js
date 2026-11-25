@@ -12,6 +12,7 @@ class Vehicle {
     this.maxForce = 0.1;
     // rayon du véhicule
     this.r = 16;
+    this.hue = random(205, 260);
   }
 
   
@@ -77,17 +78,17 @@ class Vehicle {
   }
 
   // On dessine le véhicule
-  show() {
+  show(debug = false, boosted = false) {
     // sauvegarde du contexte graphique (couleur pleine, fil de fer, 
     // épaisseur du trait, position et rotation du repère de référence)
     push();
-    // formes fil de fer en blanc
-    stroke("white");
-    // épaisseur du trait = 2
+    colorMode(HSB, 360, 100, 100, 100);
+    noStroke();
+    fill(this.hue, 75, 100, 20);
+    circle(0, 0, this.r * 2.5);
+    stroke(this.hue, 40, 100, 95);
     strokeWeight(2);
-
-    // formes pleines en bleu
-    fill("blue");
+    fill(this.hue, 75, 100, 95);
 
     // on déplace le repère de référence.
     translate(this.pos.x, this.pos.y);
@@ -100,11 +101,21 @@ class Vehicle {
     // Dessin d'un véhicule sous la forme d'un triangle. Comme s'il était droit, 
     // avec le 0, 0 en haut à gauche
     triangle(-this.r, -this.r / 2, -this.r, this.r / 2, this.r, 0);
-    
+
+    noStroke();
+    fill((this.hue + 35) % 360, 60, 100, 90);
+    triangle(-this.r * 0.95, -this.r / 4, -this.r * 0.95, this.r / 4, -this.r * 1.8, 0);
+    if (boosted) {
+      fill(45, 80, 100, 95);
+      triangle(-this.r * 1.8, -this.r / 5, -this.r * 1.8, this.r / 5, -this.r * 3.2, 0);
+    }
     pop();
+    colorMode(RGB, 255, 255, 255, 255);
 
     // dessin sous la forme d'une flèche du vecteur vitesse
-    this.drawVelocityVector();
+    if (debug) {
+      this.drawVelocityVector();
+    }
   }
 
   drawVelocityVector() {

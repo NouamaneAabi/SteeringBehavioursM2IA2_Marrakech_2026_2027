@@ -20,18 +20,18 @@ class Vehicle {
   }
 
   // Permet de rester dans les limites d'une zone rectangulaire.
-  // Lorsque le véhicule s'approche d'un bord vertical ou horizontal
-  // on calcule la vitesse désirée dans la direction "réfléchie" par
+  // Lorsque le vÃ©hicule s'approche d'un bord vertical ou horizontal
+  // on calcule la vitesse dÃ©sirÃ©e dans la direction "rÃ©flÃ©chie" par
   // rapport au bord (comme au billard).
-  // Par exemple, si le véhicule s'approche du bord gauche à moins de 
-  // 25 pixels (valeur par défaut de la variable d),
-  // on calcule la vitesse désirée en gardant le x du vecteur vitesse
+  // Par exemple, si le vÃ©hicule s'approche du bord gauche Ã  moins de 
+  // 25 pixels (valeur par dÃ©faut de la variable d),
+  // on calcule la vitesse dÃ©sirÃ©e en gardant le x du vecteur vitesse
   // et en mettant son y positif. x vaut maxSpeed et y vaut avant une valeur
-  // négative (puisque le véhicule va vers la gauche), on lui donne un y positif
-  // ça c'est pour la direction à prendre (vitesse désirée). Une fois la direction
-  // calculée on lui donne une norme égale à maxSpeed, puis on calcule la force
+  // nÃ©gative (puisque le vÃ©hicule va vers la gauche), on lui donne un y positif
+  // Ã§a c'est pour la direction Ã  prendre (vitesse dÃ©sirÃ©e). Une fois la direction
+  // calculÃ©e on lui donne une norme Ã©gale Ã  maxSpeed, puis on calcule la force
   // normalement : force = vitesseDesiree - vitesseActuelle
-  // paramètres = un rectangle (bx, by, bw, bh) et une distance d
+  // paramÃ¨tres = un rectangle (bx, by, bw, bh) et une distance d
   boundaries(bx, by, bw, bh, d) {
     let vitesseDesiree = null;
 
@@ -40,7 +40,7 @@ class Vehicle {
     const yBordHaut = by + d;
     const yBordBas = by + bh - d;
 
-    // si le véhicule est trop à gauche ou trop à droite
+    // si le vÃ©hicule est trop Ã  gauche ou trop Ã  droite
     if (this.pos.x < xBordGauche) {
       // 
       vitesseDesiree = createVector(this.maxSpeed, this.vel.y);
@@ -70,20 +70,20 @@ class Vehicle {
       strokeWeight(2);
       rect(bx, by, bw, bh);
 
-      // et du rectangle intérieur avec une bordure rouge de d pixels
+      // et du rectangle intÃ©rieur avec une bordure rouge de d pixels
       stroke("red");
       rect(bx + d, by + d, bw - 2 * d, bh - 2 * d);
 
       pop();
     }
 
-    // si on est pas près du bord (vitesse désirée nulle), on renvoie un vecteur nul
+    // si on est pas prÃ¨s du bord (vitesse dÃ©sirÃ©e nulle), on renvoie un vecteur nul
     return createVector(0, 0);
   }
 
   
   wander() {
-    // point devant le véhicule, centre du cercle
+    // point devant le vÃ©hicule, centre du cercle
     let pointDevant = this.vel.copy();
     pointDevant.setMag(this.distanceCercle);
     pointDevant.add(this.pos);
@@ -102,10 +102,10 @@ class Vehicle {
       stroke(255);
       circle(pointDevant.x, pointDevant.y, this.wanderRadius * 2);
 
-      // on dessine une ligne qui relie le vaisseau à ce point
+      // on dessine une ligne qui relie le vaisseau Ã  ce point
       // c'est la ligne blanche en face du vaisseau
       strokeWeight(2);
-      // ligne en pointillés
+      // ligne en pointillÃ©s
       stroke(255, 255, 255, 80);
       drawingContext.setLineDash([5, 15]);
       stroke(255, 255, 255, 80);
@@ -115,7 +115,7 @@ class Vehicle {
 
     // On va s'occuper de calculer le point vert SUR LE CERCLE
     // il fait un angle wanderTheta avec le centre du cercle
-    // l'angle final par rapport à l'axe des X c'est l'angle du vaisseau
+    // l'angle final par rapport Ã  l'axe des X c'est l'angle du vaisseau
     // + cet angle
     let theta = this.wanderTheta + this.vel.heading();
     let pointSurLeCercle = createVector(0, 0);
@@ -132,29 +132,29 @@ class Vehicle {
       circle(pointSurLeCercle.x, pointSurLeCercle.y, 16);
 
       // on dessine le vecteur qui va du centre du vaisseau
-      // à ce point vert sur le cercle
+      // Ã  ce point vert sur le cercle
       stroke("yellow");
       strokeWeight(1);
-      // pas en pointillés mais une ligne pleine
+      // pas en pointillÃ©s mais une ligne pleine
       drawingContext.setLineDash([]);
       line(this.pos.x, this.pos.y, pointSurLeCercle.x, pointSurLeCercle.y);
     }
 
-    // entre chaque image on va déplacer aléatoirement
+    // entre chaque image on va dÃ©placer alÃ©atoirement
     // le point vert en changeant un peu son angle...
     this.wanderTheta += random(-this.displaceRange, this.displaceRange);
 
-    // D'après l'article, la force est égale au vecteur qui va du
-    // centre du vaisseau, à ce point vert. On va aussi la limiter
-    // à this.maxForce
+    // D'aprÃ¨s l'article, la force est Ã©gale au vecteur qui va du
+    // centre du vaisseau, Ã  ce point vert. On va aussi la limiter
+    // Ã  this.maxForce
     // REMPLACER LA LIGNE SUIVANTE !
     let force = p5.Vector.sub(pointSurLeCercle, this.pos);
-    // On met la force à maxForce
+    // On met la force Ã  maxForce
     force.setMag(this.maxForce);
 
     pop();
 
-    // et on la renvoie au cas où....
+    // et on la renvoie au cas oÃ¹....
     return force;
   }
 
@@ -182,17 +182,17 @@ class Vehicle {
   }
 
   flee(target) {
-    // recopier code de flee de l'exemple précédent
+    // recopier code de flee de l'exemple prÃ©cÃ©dent
   }
 
   seek(target, arrival = false, d=0) {
     let valueDesiredSpeed = this.maxSpeed;
 
     if (arrival) {
-      // On définit un rayon de 100 pixels autour de la cible
-      // si la distance entre le véhicule courant et la cible
-      // est inférieure à ce rayon, on ralentit le véhicule
-      // desiredSpeed devient inversement proportionnelle à la distance
+      // On dÃ©finit un rayon de 100 pixels autour de la cible
+      // si la distance entre le vÃ©hicule courant et la cible
+      // est infÃ©rieure Ã  ce rayon, on ralentit le vÃ©hicule
+      // desiredSpeed devient inversement proportionnelle Ã  la distance
       // si la distance est petite, force = grande
       // Vous pourrez utiliser la fonction P5 
       // distance = map(valeur, valeurMin, valeurMax, nouvelleValeurMin, nouvelleValeurMax)
@@ -208,11 +208,11 @@ class Vehicle {
         pop();
       }
 
-      // 2 - calcul de la distance entre la cible et le véhicule
+      // 2 - calcul de la distance entre la cible et le vÃ©hicule
       let distance = p5.Vector.dist(this.pos, target);
 
       // 3 - si distance < rayon du cercle, alors on modifie desiredSPeed
-      // qui devient inversement proportionnelle à la distance.
+      // qui devient inversement proportionnelle Ã  la distance.
       // si d = rayon alors desiredSpeed = maxSpeed
       // si d = 0 alors desiredSpeed = 0
       if (distance < this.rayonZoneDeFreinage) {
@@ -220,9 +220,9 @@ class Vehicle {
       }
     }
 
-    // Ici on calcule la force à appliquer au véhicule
-    // pour aller vers la cible (avec ou sans arrivée)
-    // un vecteur qui va vers la cible, c'est pour le moment la vitesse désirée
+    // Ici on calcule la force Ã  appliquer au vÃ©hicule
+    // pour aller vers la cible (avec ou sans arrivÃ©e)
+    // un vecteur qui va vers la cible, c'est pour le moment la vitesse dÃ©sirÃ©e
     let desiredSpeed = p5.Vector.sub(target, this.pos);
     desiredSpeed.setMag(valueDesiredSpeed);
    
@@ -300,3 +300,97 @@ class Target extends Vehicle {
     pop();
   }
 }
+
+/*
+ * Extensions de steering utilisÃ©es par lâ€™Ã©tape 2.
+ * Elles restent sur Vehicle afin que serpent, prÃ©dateurs et obstacles
+ * partagent les mÃªmes rÃ¨gles de dÃ©placement.
+ */
+Vehicle.prototype.pursue = function (vehicle, prediction = 12) {
+  this.predictedPosition = vehicle.pos.copy();
+  if (vehicle.vel.magSq() > 0) this.predictedPosition.add(vehicle.vel.copy().setMag(prediction));
+  return this.seek(this.predictedPosition);
+};
+
+Vehicle.prototype.separation = function (vehicles, desiredDistance = 90) {
+  const force = createVector(0, 0);
+  let neighbours = 0;
+  for (const other of vehicles) {
+    if (other === this) continue;
+    const distance = p5.Vector.dist(this.pos, other.pos);
+    if (distance > 0 && distance < desiredDistance) {
+      const away = p5.Vector.sub(this.pos, other.pos);
+      away.setMag(1 / distance);
+      force.add(away);
+      neighbours += 1;
+    }
+  }
+  if (neighbours === 0) return force;
+  force.div(neighbours);
+  force.setMag(this.maxSpeed);
+  force.sub(this.vel);
+  force.limit(this.maxForce);
+  this.separationForce = force.copy();
+  return force;
+};
+
+Vehicle.prototype.avoidObstacles = function (obstacles, lookAhead = WORLD.obstacleLookAhead) {
+  const force = createVector(0, 0);
+  const direction = this.vel.magSq() > 0 ? this.vel.copy().normalize() : createVector(1, 0);
+  const ahead = this.pos.copy().add(direction.mult(WORLD.obstacleLookAhead));
+  this.avoidanceRadius = 0;
+
+  for (const obstacle of obstacles) {
+    const offset = p5.Vector.sub(ahead, obstacle.pos);
+    const safeDistance = obstacle.r + this.r + WORLD.obstacleAvoidanceMargin;
+    if (offset.mag() < safeDistance) {
+      const strength = map(offset.mag(), 0, safeDistance, this.maxForce * 2.5, 0);
+      offset.normalize().mult(strength);
+      force.add(offset);
+      this.avoidanceRadius = max(this.avoidanceRadius, safeDistance);
+    }
+  }
+
+  force.limit(this.maxForce * 2.5);
+  this.avoidanceForce = force.copy();
+  return force;
+};
+
+Vehicle.prototype.boundaryAvoidance = function (margin = WORLD.boundaryMargin) {
+  const force = createVector(0, 0);
+  if (this.pos.x < margin) force.x += map(this.pos.x, 0, margin, this.maxForce * 2, 0);
+  if (this.pos.x > width - margin) force.x -= map(width - this.pos.x, 0, margin, this.maxForce * 2, 0);
+  if (this.pos.y < margin) force.y += map(this.pos.y, 0, margin, this.maxForce * 2, 0);
+  if (this.pos.y > height - margin) force.y -= map(height - this.pos.y, 0, margin, this.maxForce * 2, 0);
+  force.limit(this.maxForce * 2);
+  this.boundaryForce = force.copy();
+  return force;
+};
+
+Vehicle.prototype.drawSteeringDebug = function (detectionRadius = 0) {
+  if (!Vehicle.debug) return;
+  push();
+  strokeWeight(2);
+  stroke(255, 80, 80, 210);
+  line(this.pos.x, this.pos.y, this.pos.x + this.vel.x * 16, this.pos.y + this.vel.y * 16);
+  stroke(255, 220, 100, 210);
+  line(this.pos.x, this.pos.y, this.pos.x + this.acc.x * 90, this.pos.y + this.acc.y * 90);
+  if (detectionRadius > 0) {
+    noFill();
+    stroke(255, 70, 150, 120);
+    circle(this.pos.x, this.pos.y, detectionRadius * 2);
+  }
+  if (this.predictedPosition) {
+    stroke(120, 255, 160, 220);
+    line(this.pos.x, this.pos.y, this.predictedPosition.x, this.predictedPosition.y);
+    fill(120, 255, 160);
+    noStroke();
+    circle(this.predictedPosition.x, this.predictedPosition.y, 7);
+  }
+  if (this.avoidanceRadius > 0) {
+    noFill();
+    stroke(255, 150, 50, 140);
+    circle(this.pos.x, this.pos.y, this.avoidanceRadius * 2);
+  }
+  pop();
+};
