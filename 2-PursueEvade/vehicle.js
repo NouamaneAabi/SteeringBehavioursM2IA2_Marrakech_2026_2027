@@ -1,4 +1,6 @@
 class Vehicle {
+  static debug = false;
+
   constructor(x, y) {
     // position du véhicule
     this.pos = createVector(x, y);
@@ -83,25 +85,94 @@ class Vehicle {
     return force;
   }
 
+  /**
+   * Calcule le point d'interception parfait par la loi des sinus
+   * (avec repli sécurisé pour éviter NaN lorsque les vecteurs sont colinéaires
+   * ou lorsque la cible est plus rapide que le poursuiveur).
+   */
+  computePerfectInterceptionPoint(vehicle) {
+    const targetSpeed = vehicle.vel.mag();
+    if (targetSpeed < 1e-4 || this.maxSpeed < 1e-4) {
+      return vehicle.pos.copy();
+    }
+
+    const toMe = p5.Vector.sub(this.pos, vehicle.pos);
+    const dist = toMe.mag();
+    if (dist < 1e-4) {
+      return vehicle.pos.copy();
+    }
+
+    const speedRatio = targetSpeed / this.maxSpeed;
+    const targetAngle = vehicle.vel.angleBetween(toMe);
+    const sinMyAngle = Math.sin(targetAngle) * speedRatio;
+
+    let prediction;
+    if (Math.abs(sinMyAngle) < 1) {
+      const myAngle = Math.asin(sinMyAngle);
+      const denom = Math.sin(PI - myAngle - targetAngle);
+      if (Math.abs(denom) > 1e-4) {
+        prediction = (dist * Math.sin(myAngle)) / denom;
+      } else {
+        // Trajectoire colinéaire : estimation linéaire du temps d'interception
+        prediction = (dist / (this.maxSpeed + targetSpeed)) * targetSpeed;
+      }
+    } else {
+      // Cible plus rapide que le poursuiveur : anticipation bornée
+      prediction = Math.min(dist * 0.75, targetSpeed * 15);
+    }
+
+    if (!Number.isFinite(prediction) || prediction < 0) {
+      prediction = 0;
+    } else {
+      prediction = Math.min(prediction, dist * 2);
+    }
+
+    const interception = vehicle.vel.copy();
+    interception.setMag(prediction);
+    interception.add(vehicle.pos);
+    return interception;
+  }
+
   /**  Fonction de poursuite parfaite (avec le point devant la
   target qui se rapproche quand le poursuiveur se rapproche)
   */
-  pursuePerfect(vehicle) {
-    // Use the Law of Sines (https://en.wikipedia.org/wiki/Law_of_sines)
-    // to predict the right collision point
-    const speed_ratio = vehicle.vel.mag() / this.maxSpeed;
-    const target_angle = vehicle.vel.angleBetween(p5.Vector.sub(this.pos, vehicle.pos));
-    const my_angle = asin(sin(target_angle) * speed_ratio);
-    const dist = this.pos.dist(vehicle.pos);
-    const prediction = dist * sin(my_angle) / sin(PI - my_angle - target_angle);
-    const target = vehicle.vel.copy().setMag(prediction).add(vehicle.pos);
-    
-    drawArrow(vehicle.pos, p5.Vector.mult(vehicle.vel, 20), 'red');
-    drawArrow(this.pos, p5.Vector.sub(target, this.pos), 'green');
-    
-    fill(0, 255, 0);
-    circle(target.x, target.y, 8);
-    return this.seek(target);
+  pursuePerfect(vehicle, showInterception = true) {
+    const interception = this.computePerfectInterceptionPoint(vehicle);
+
+    if (showInterception) {
+      push();
+      noFill();
+      if (Vehicle.debug) {
+        stroke(74, 222, 128, 75);
+        strokeWeight(1.5);
+        line(this.pos.x, this.pos.y, interception.x, interception.y);
+      }
+
+      stroke(250, 204, 21, 220);
+      strokeWeight(1.5);
+      circle(interception.x, interception.y, 14);
+      line(interception.x - 9, interception.y, interception.x + 9, interception.y);
+      line(interception.x, interception.y - 9, interception.x, interception.y + 9);
+
+      noStroke();
+      fill(74, 222, 128);
+      circle(interception.x, interception.y, 5);
+      pop();
+    }
+
+    if (Vehicle.debug) {
+      drawArrow(vehicle.pos, p5.Vector.mult(vehicle.vel, 15), "red");
+    }
+
+    return this.seek(interception);
+  }
+
+  /**
+   * Évasion parfaite : force opposée à pursuePerfect(vehicle).
+   * Réutilisable par toute sous-classe de Vehicle.
+   */
+  evadePerfect(vehicle, showInterception = false) {
+    return this.pursuePerfect(vehicle, showInterception).mult(-1);
   }
 
 
@@ -127,30 +198,23 @@ class Vehicle {
 
   // On dessine le véhicule
   show() {
-    // formes fil de fer en blanc
-    stroke(255);
-    // épaisseur du trait = 2
-    strokeWeight(2);
-
-    // formes pleines en blanc
-    fill(255);
-
-    // sauvegarde du contexte graphique (couleur pleine, fil de fer, épaisseur du trait, 
+    // sauvegarde du contexte graphique (couleur pleine, fil de fer, épaisseur du trait,
     // position et rotation du repère de référence)
     push();
-    // on déplace le repère de référence.
+    stroke(255);
+    strokeWeight(2);
+    fill(255);
+
     translate(this.pos.x, this.pos.y);
-    // et on le tourne. heading() renvoie l'angle du vecteur vitesse (c'est l'angle du véhicule)
     rotate(this.vel.heading());
 
-    // Dessin d'un véhicule sous la forme d'un triangle. Comme s'il était droit, avec le 0, 0 en haut à gauche
+    // Dessin d'un véhicule sous la forme d'un triangle
     triangle(-this.r, -this.r / 2, -this.r, this.r / 2, this.r, 0);
-    // Que fait cette ligne ?
-    //this.edges();
-
-    // draw velocity vector
     pop();
-    this.drawVector(this.pos, this.vel.copy().mult(10));
+
+    if (Vehicle.debug) {
+      this.drawVector(this.pos, this.vel.copy().mult(10));
+    }
   }
 
   drawVector(pos, v) {
