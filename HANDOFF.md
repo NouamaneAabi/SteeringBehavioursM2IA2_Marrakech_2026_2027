@@ -631,3 +631,57 @@ Avant toute modification de code :
   - En attente de retours de test sur `5-3-PathFollowingComplex/index.html` ou de nouvelles tâches.
 - **Points d'attention / bugs connus** :
   - Aucun bug connu ; 6/6 tests unitaires passent.
+
+### Passation #27 — 2026-11-24
+- **Assistant sortant** : Gemini
+- **Travail effectué** :
+  - Ajout dans `5-3-PathFollowingComplex/` (`index.html`, `sketch.js`) d'un curseur **Complexité du circuit** (`#circuit-complexity`, `1..10`, défaut `3`) et d'un bouton **Nouveau circuit** (`#new-path-btn`).
+  - Refonte de `newPath(complexity)` : génération polaire multi-harmoniques (`16..61` segments selon la complexité) normalisée par rapport à `width`, `height` et `circuitWidth + 36` pour garantir des circuits plus ou moins complexes (chicanes, lobes, virages) tenant toujours intégralement dans l'écran sans auto-intersection.
+  - Vérification syntaxique (`node --check`), exécution des 6 tests unitaires (`6/6` passés) et mise à jour de `README.md`.
+- **Fichiers créés / modifiés** :
+  - `5-3-PathFollowingComplex/index.html`
+  - `5-3-PathFollowingComplex/sketch.js`
+  - `README.md`
+  - `HANDOFF.md`
+- **Prochaines étapes** :
+  - En attente de retours de test sur `5-3-PathFollowingComplex/index.html` ou de nouvelles tâches.
+- **Points d'attention / bugs connus** :
+  - Aucun bug connu ; 6/6 tests unitaires passent.
+
+### Passation #28 — 2026-11-24
+- **Assistant sortant** : Gemini
+- **Travail effectué** :
+  - Implémentation dans `6-ObstacleAvoidance/` (`6-specification.md`, `vehicle.js`, `sketch.js`, `style.css`) :
+    - **Bouton toggle** basculant entre `Mode 1 : Séparation entre vaisseaux` (avec curseur **Poids séparation** `0..3`, défaut `0.5`, et correction des noms `maxSpeed` / `vel` / `maxForce` dans `separate()`) et `Mode 2 : Vaisseaux = Obstacles` (sans `separate`, les autres vaisseaux sont passés à `avoid()`).
+    - **Menu Nombre de rayons** uniquement impair (`1` par défaut, choix `1, 3, 5, 7, 9, 11, 13`, toujours un rayon droit devant) + curseur **Amplitude vue (°)** (`10°..360°`, défaut `100°`, répartition uniforme sans chevauchement à `360°`) + curseur **Largeur zone côtés** (`20%..150%`, défaut `100%`) + curseur **Force max** (`0.05..1.50`, défaut `0.20`) :
+      - Avec `1` rayon : utilisation exacte des 3 points `(pos, ahead2, ahead)` (pour obstacles et vaisseaux-obstacles) et visualisation en jaune du vecteur de plus petite distance (`obs.pos -> closestSample`).
+      - Avec `> 1` rayons : rayons répartis à angles égaux devant le vaisseau (`getRayAngles()`), 2 points de détection par rayon (`50 %` et `100 %`), filtrage du risque réel via une zone de danger (**hexagone `r * 1.2` autour du vaisseau + rectangle devant jusqu'au bout du rayon colinéaire à `vel`**), visualisée en mode debug.
+    - Panneau UI repliable en haut à droite, protection de `mousePressed()` sur `.controls`, checkbox debug synchronisée avec `D`/`d`, et suppression de la classe `Target` inutilisée dans `vehicle.js` (1 classe/fichier).
+  - Vérification syntaxique (`node --check`) et mise à jour de `README.md`.
+- **Fichiers créés / modifiés** :
+  - `6-ObstacleAvoidance/6-specification.md` (nouveau)
+  - `6-ObstacleAvoidance/vehicle.js`
+  - `6-ObstacleAvoidance/sketch.js`
+  - `6-ObstacleAvoidance/style.css`
+  - `README.md`
+  - `HANDOFF.md`
+- **Prochaines étapes** :
+  - En attente de retours de test sur `6-ObstacleAvoidance/index.html` ou de nouvelles tâches.
+- **Points d'attention / bugs connus** :
+  - Aucun bug connu ; prêt pour test utilisateur dans le navigateur (`6-ObstacleAvoidance/index.html`).
+
+### Passation #29 — 2026-11-24
+- **Assistant sortant** : Gemini
+- **Travail effectué** :
+  - Création de `common/vehicle.js` : classe `Vehicle` unifiée (et alias `const Boid = Vehicle`) regroupant tous les comportements et propriétés des exemples 1 à 7 (`seek`, `flee`, `fleeWithTargetRadius`, `arrive`, `pursue`, `evade`, `pursuePerfect`, `computePerfectInterceptionPoint`, `wander`, `follow` simple et complexe, `avoid` multi-rayons + zone critique, `boundaries`, `align`, `cohesion`, `separation`/`separate`, `flock`, `findClosestTarget`, `randomPatrol`).
+  - Création du banc de test `common/test/index.html` et des 8 pages lanceurs (`ex1-seek.html`, `ex2-pursue.html`, `ex3-arrival.html`, `ex4-wander.html`, `ex5-2-path.html`, `ex5-3-complex-path.html`, `ex6-avoidance.html`, `ex7-boids.html`) utilisant toutes `common/vehicle.js`.
+  - Vérification syntaxique (`node --check common/vehicle.js`) et mise à jour de `README.md`.
+- **Fichiers créés / modifiés** :
+  - `common/vehicle.js` (nouveau)
+  - `common/test/index.html` et `common/test/ex*.html` (nouveaux)
+  - `README.md`
+  - `HANDOFF.md`
+- **Prochaines étapes** :
+  - En attente de retours de test sur `common/test/index.html` ou de nouvelles tâches.
+- **Points d'attention / bugs connus** :
+  - Aucun bug connu ; `common/vehicle.js` validé par `node --check`.

@@ -22,6 +22,7 @@ let snakes = [];
 let snakeFollowWeight = 2;
 let snakeSeparationWeight = 1.2;
 let circuitWidth = 20;
+let circuitComplexity = 3;
 let snakeSpacing = 20;
 let snakeSize = 22;
 let entitySpacing = 24;
@@ -92,6 +93,10 @@ function bindSnakeControls() {
     if (entitySpacingEl) {
       entitySpacing = Number(entitySpacingEl.value);
     }
+    const complexityEl = document.getElementById('circuit-complexity');
+    if (complexityEl) {
+      circuitComplexity = Number(complexityEl.value);
+    }
     if (path) path.radius = circuitWidth;
     for (const v of vehicles) {
       v.separationDistance = entitySpacing;
@@ -112,12 +117,33 @@ function bindSnakeControls() {
     if (entitySpacingValEl) {
       entitySpacingValEl.value = `${entitySpacing.toFixed(0)} px`;
     }
+    const complexityValEl = document.getElementById('circuit-complexity-value');
+    if (complexityValEl) {
+      complexityValEl.value = String(circuitComplexity);
+    }
   };
   for (const id of ['snake-follow', 'snake-separation', 'circuit-width', 'snake-spacing', 'snake-size', 'entity-spacing']) {
     const el = document.getElementById(id);
     if (!el) continue;
     el.addEventListener('input', synchronize);
     el.addEventListener('change', synchronize);
+  }
+
+  const complexitySlider = document.getElementById('circuit-complexity');
+  if (complexitySlider) {
+    const onComplexityInput = () => {
+      synchronize();
+      newPath(circuitComplexity);
+    };
+    complexitySlider.addEventListener('input', onComplexityInput);
+    complexitySlider.addEventListener('change', onComplexityInput);
+  }
+
+  const newPathBtn = document.getElementById('new-path-btn');
+  if (newPathBtn) {
+    newPathBtn.addEventListener('click', () => {
+      newPath(circuitComplexity);
+    });
   }
 
   const addSnakeBtn = document.getElementById('add-snake-btn');
@@ -152,41 +178,58 @@ function bindSnakeControls() {
   synchronize();
 }
 
-function newPath() {
-  // Simple suite de points partant de 30, 30 et allant vers 30, height - 30 etc.
+function newPath(complexity = circuitComplexity) {
   path = new Path();
-  
-  /*
-  let offset = 100;
-  path.addPoint(offset, offset);
-  path.addPoint(300, 180);
-  path.addPoint(width - offset, offset);
-  path.addPoint(width - offset, height - offset);
-  path.addPoint(width / 2, height - offset * 3);
-  path.addPoint(200,550);
-  path.addPoint(offset, height - offset);
-*/
-  // genere un circuit qui ressemble à une piste de course
-  // de voiture, sans angles trop durs
-  // Je voudrais une trentaine de segments
-  // Pas dangles trop aigus
-  // et un peu d'aléatoire pour ne pas générer toujours le même circuit
-  
-  let offset = 100;
-  let nbSegments = 30;
-  let angleStep = (TWO_PI / nbSegments);
-  let radiusMin = min(width, height) / 3;
-  let radiusMax = min(width, height) / 2.5;
+  path.radius = circuitWidth;
 
+  const level = constrain(Math.round(complexity), 1, 10);
+  const nbSegments = 16 + (level - 1) * 5; // 16 à 61 segments selon la complexité
+  const angleStep = TWO_PI / nbSegments;
+
+  // Marge garantie pour que tout le circuit (y compris sa largeur) tienne dans l'écran
+  const margin = circuitWidth + 36;
+  const maxRx = Math.max(80, width * 0.5 - margin);
+  const maxRy = Math.max(80, height * 0.5 - margin);
+  const cx = width * 0.5;
+  const cy = height * 0.5;
+
+  // Harmoniques de forme pour créer chicanes, lobes et virages sans auto-intersection
+  const t = (level - 1) / 9; // 0..1
+  const amp1 = 0.04 + t * 0.16;
+  const amp2 = t * 0.18;
+  const amp3 = t * 0.12;
+  const freq1 = 2;
+  const freq2 = 3 + Math.floor(level / 3);
+  const freq3 = 5 + Math.floor(level / 2);
+  const phase1 = random(TWO_PI);
+  const phase2 = random(TWO_PI);
+  const phase3 = random(TWO_PI);
+  const jitter = t * 0.05;
+
+  const rawRadii = [];
+  let maxRaw = 0;
   for (let i = 0; i < nbSegments; i++) {
-    let angle = i * angleStep;
-    // un peu d'aléatoire sur le rayon
-    let radius = random(radiusMin, radiusMax);
-    let x = width / 2 + cos(angle) * radius;
-    let y = height / 2 + sin(angle) * radius;
+    const angle = i * angleStep;
+    const r =
+      0.78 +
+      amp1 * Math.sin(freq1 * angle + phase1) +
+      amp2 * Math.sin(freq2 * angle + phase2) +
+      amp3 * Math.cos(freq3 * angle + phase3) +
+      random(-jitter, jitter);
+    const clampedR = Math.max(0.28, r);
+    rawRadii.push(clampedR);
+    if (clampedR > maxRaw) maxRaw = clampedR;
+  }
+
+  // Normalisation pour tenir strictement dans [margin .. width - margin] x [margin .. height - margin]
+  const normScale = maxRaw > 0 ? 1 / maxRaw : 1;
+  for (let i = 0; i < nbSegments; i++) {
+    const angle = i * angleStep;
+    const factor = rawRadii[i] * normScale;
+    const x = constrain(cx + cos(angle) * maxRx * factor, margin, width - margin);
+    const y = constrain(cy + sin(angle) * maxRy * factor, margin, height - margin);
     path.addPoint(x, y);
   }
-  
 }
 
 function newVehicle(x, y) {
@@ -226,6 +269,7 @@ function keyPressed(event) {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  newPath(circuitComplexity);
 }
 
 function mouseDragged(event) {

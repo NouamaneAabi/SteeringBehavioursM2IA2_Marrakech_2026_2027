@@ -26,7 +26,14 @@
       <div class="controls__content">
         <div class="controls__actions">
           <button id="add-snake-btn" type="button" class="controls__btn">+ Créer un serpent (T)</button>
+          <button id="new-path-btn" type="button" class="controls__toggle">Nouveau circuit</button>
           <output id="snake-count" class="controls__badge" aria-live="polite">1 serpent</output>
+        </div>
+
+        <div class="controls__row">
+          <label for="circuit-complexity">Complexité du circuit</label>
+          <input id="circuit-complexity" type="range" min="1" max="10" step="1" value="3">
+          <output id="circuit-complexity-value" for="circuit-complexity">3</output>
         </div>
 
         <div class="controls__row">
