@@ -1,73 +1,54 @@
-﻿class SnakeRing extends Vehicle {
-  constructor(x, y, index) {
+class SnakeRing extends Vehicle {
+  constructor(x, y, r = 14) {
     super(x, y);
-    this.index = index;
-    this.r = max(SNAKE_STYLE.minRingRadius, SNAKE_STYLE.firstRingRadius - index * SNAKE_STYLE.ringTaper);
-    this.maxSpeed = WORLD.snakeBaseMaxSpeed;
-    this.maxForce = 0.48;
-    this.hue = PALETTE.snakeHeadHue;
-    this.growthStartedAt = millis();
-    this.pulseStartedAt = 0;
+    this.r = r;
+    this.maxSpeed = 10;
+    this.maxForce = 2;
+    this.rayonZoneDeFreinage = 100;
+    this.heading = 0;
+    this.fillColor = color(34, 211, 238);
   }
 
-  follow(point) {
-    this.applyForce(this.arrive(point, 0));
+  applyBehaviors(leader, gapDistance) {
+    if (!leader) {
+      return;
+    }
+
+    const dx = leader.pos.x - this.pos.x;
+    const dy = leader.pos.y - this.pos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Zone morte quand le maillon précédent est arrêté et que la distance est déjà atteinte
+    if (
+      leader.vel.magSq() < 0.04 &&
+      Math.abs(dist - gapDistance) < 1.5 &&
+      this.vel.magSq() < 0.09
+    ) {
+      this.vel.set(0, 0);
+      this.acc.set(0, 0);
+      return;
+    }
+
+    const force = this.arrive(leader.pos, gapDistance);
+    this.applyForce(force);
   }
 
-  setStyle(index, total) {
-    this.index = index;
-    this.r = max(SNAKE_STYLE.minRingRadius, SNAKE_STYLE.firstRingRadius - index * SNAKE_STYLE.ringTaper);
-    const amount = total <= 1 ? 0 : index / (total - 1);
-    this.hue = lerp(PALETTE.snakeHeadHue, PALETTE.snakeTailHue, amount);
+  update() {
+    super.update();
+    if (this.vel.magSq() > 0.25) {
+      this.heading = this.vel.heading();
+    } else if (this.vel.magSq() < 0.01) {
+      this.vel.set(0, 0);
+    }
   }
 
   show() {
-    const growthAmount = constrain((millis() - this.growthStartedAt) / SNAKE_STYLE.growthDuration, 0, 1);
-    const growthScale = growthAmount < 1 ? easeOutBack(growthAmount) : 1;
-    const pulseAge = this.pulseStartedAt > 0 ? millis() - this.pulseStartedAt - this.index * 32 : Infinity;
-    const pulseAmount = pulseAge >= 0 && pulseAge < SNAKE_STYLE.pulseDuration
-      ? 1 - pulseAge / SNAKE_STYLE.pulseDuration
-      : 0;
-    const radius = this.r * growthScale * (1 + pulseAmount * 0.16);
-
     push();
     translate(this.pos.x, this.pos.y);
-    colorMode(HSB, 360, 100, 100, 100);
-
-    noStroke();
-    fill(this.hue, 80, 100, 12 + pulseAmount * 14);
-    circle(0, 0, radius * SNAKE_STYLE.glowScale);
-
-    fill(this.hue, 72, 78 + pulseAmount * 16, 100);
-    stroke(this.hue, 62, 100, 100);
-    strokeWeight(1.4);
-    ellipse(0, 0, radius * 2.1, radius * 1.78);
-
-    stroke(this.hue, 45, 100, 85);
-    strokeWeight(1);
-    noFill();
-    beginShape();
-    vertex(-radius * 0.7, -radius * 0.08);
-    vertex(-radius * 0.12, -radius * 0.62);
-    vertex(radius * 0.52, -radius * 0.08);
-    vertex(radius * 0.08, radius * 0.56);
-    endShape();
-    arc(0, 0, radius * 1.3, radius * 1.3, 0.2, PI - 0.2);
-
-    if (pulseAmount > 0) {
-      noFill();
-      stroke(PALETTE.crystal, pulseAmount * 100, 100);
-      strokeWeight(2);
-      circle(0, 0, radius * 2.8);
-    }
-
+    stroke(255, 255, 255, 190);
+    strokeWeight(1.5);
+    fill(this.fillColor);
+    circle(0, 0, this.r * 2);
     pop();
-    colorMode(RGB, 255, 255, 255, 255);
   }
-}
-
-function easeOutBack(value) {
-  const overshoot = 1.70158;
-  const shifted = value - 1;
-  return 1 + (overshoot + 1) * shifted * shifted * shifted + overshoot * shifted * shifted;
 }

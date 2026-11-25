@@ -1,71 +1,139 @@
 class SnakeHead extends Vehicle {
-  constructor(x, y) {
+  constructor(x, y, r = 20) {
     super(x, y);
-    this.r = SNAKE_STYLE.headRadius;
-    this.maxSpeed = WORLD.snakeBaseMaxSpeed;
-    this.maxForce = 0.28;
-    this.hue = PALETTE.snakeHeadHue;
-    this.invulnerableUntil = 0;
-    this.lastTargetAngle = 0;
+    this.r = r;
+    this.maxSpeed = 8;
+    this.maxForce = 0.4;
+    this.rayonZoneDeFreinage = 120;
+    this.heading = 0;
+    this.lookTarget = createVector(x + 1, y);
+
+    // Cycle d'animation de la langue fourchue
+    this.tongueCycleMs = 2800;
+    this.tongueActiveMs = 750;
   }
 
-  follow(target) {
-    this.applyForce(this.arrive(target, 0));
+  applyBehaviors(target) {
+    if (!target) {
+      return;
+    }
+
+    this.lookTarget.set(target.x, target.y);
+
+    const dx = target.x - this.pos.x;
+    const dy = target.y - this.pos.y;
+    const distSq = dx * dx + dy * dy;
+
+    // Zone morte à l'arrêt pour supprimer les micro-mouvements sur la cible
+    if (distSq < 2.25 && this.vel.magSq() < 0.04) {
+      this.vel.set(0, 0);
+      this.acc.set(0, 0);
+      return;
+    }
+
+    const force = this.arrive(target, 0);
+    this.applyForce(force);
   }
 
-  show(targetPosition = null) {
-    const speedRatio = constrain(this.vel.mag() / this.maxSpeed, 0, 1);
-    const squash = lerp(SNAKE_STYLE.scaleMin, SNAKE_STYLE.scaleMax, speedRatio);
-    const flashing = millis() < this.invulnerableUntil;
-    const bodyHue = flashing ? 350 : this.hue;
-    const flashPhase = flashing ? (sin(frameCount * 0.45) + 1) * 0.5 : 0;
-    const targetAngle = targetPosition ? p5.Vector.sub(targetPosition, this.pos).heading() - this.vel.heading() : 0;
-    this.lastTargetAngle = lerp(this.lastTargetAngle, targetAngle, 0.14);
+  update() {
+    super.update();
+    if (this.vel.magSq() > 0.25) {
+      this.heading = this.vel.heading();
+    } else if (this.vel.magSq() < 0.01) {
+      this.vel.set(0, 0);
+    }
+  }
+
+  drawForkedTongue() {
+    const phase = millis() % this.tongueCycleMs;
+    if (phase > this.tongueActiveMs) {
+      return;
+    }
+
+    const progress = phase / this.tongueActiveMs;
+    const extension = Math.sin(progress * PI);
+    const baseLen = this.r * 0.95;
+    const tongueLen = baseLen + extension * this.r * 0.95;
+    const wiggle = Math.sin(millis() * 0.035) * 3.5 * extension;
+    const forkLen = 7 * extension;
 
     push();
-    translate(this.pos.x, this.pos.y);
-    rotate(this.vel.heading());
-    scale(squash, 2 - squash);
-    colorMode(HSB, 360, 100, 100, 100);
+    stroke(244, 63, 94);
+    strokeWeight(2.4);
+    strokeCap(ROUND);
+    noFill();
 
-    noStroke();
-    fill(bodyHue, 82, 100, 15 + flashPhase * 20);
-    circle(0, 0, this.r * SNAKE_STYLE.headGlowScale);
-
-    fill(bodyHue, 72, 84, 100);
-    stroke(flashing ? 350 : 188, 68, 100, 100);
-    strokeWeight(2.2);
-    beginShape();
-    vertex(this.r * 1.55, 0);
-    vertex(this.r * 0.65, -this.r * 0.7);
-    vertex(-this.r * 0.55, -this.r * 0.8);
-    vertex(-this.r, -this.r * 0.38);
-    vertex(-this.r * 0.92, 0);
-    vertex(-this.r, this.r * 0.38);
-    vertex(-this.r * 0.55, this.r * 0.8);
-    vertex(this.r * 0.65, this.r * 0.7);
-    endShape(CLOSE);
-
-    noStroke();
-    fill(PALETTE.crystal);
-    circle(this.r * 0.64, -this.r * 0.42, 6);
-    circle(this.r * 0.64, this.r * 0.42, 6);
-
-    fill('#07101f');
-    const pupilX = this.r * 0.66 + cos(this.lastTargetAngle) * 1.8;
-    const pupilY = sin(this.lastTargetAngle) * 1.8;
-    circle(pupilX, -this.r * 0.42 + pupilY, 2.4);
-    circle(pupilX, this.r * 0.42 + pupilY, 2.4);
-
-    const tongueWave = (sin(frameCount * SNAKE_STYLE.tongueSpeed) + 1) * 0.5;
-    const tongueLength = SNAKE_STYLE.tongueMaxLength * (0.45 + tongueWave * 0.55);
-    stroke(PALETTE.magenta);
-    strokeWeight(1.7);
-    line(this.r * 1.32, 0, this.r * 1.32 + tongueLength, 0);
-    line(this.r * 1.32 + tongueLength, 0, this.r * 1.32 + tongueLength + 6, -4);
-    line(this.r * 1.32 + tongueLength, 0, this.r * 1.32 + tongueLength + 6, 4);
-
+    const tipX = tongueLen;
+    const tipY = wiggle;
+    line(this.r * 0.75, 0, tipX, tipY);
+    line(tipX, tipY, tipX + forkLen, tipY - forkLen * 0.85);
+    line(tipX, tipY, tipX + forkLen, tipY + forkLen * 0.85);
     pop();
-    colorMode(RGB, 255, 255, 255, 255);
+  }
+
+  drawEyes() {
+    const eyeForward = this.r * 0.28;
+    const eyeSide = this.r * 0.48;
+    const eyeRadius = this.r * 0.3;
+    const pupilRadius = eyeRadius * 0.52;
+
+    const worldLookAngle = Math.atan2(
+      this.lookTarget.y - this.pos.y,
+      this.lookTarget.x - this.pos.x
+    );
+    const localLookAngle = worldLookAngle - this.heading;
+    const pupilOffset = eyeRadius - pupilRadius - 1;
+    const px = Math.cos(localLookAngle) * pupilOffset;
+    const py = Math.sin(localLookAngle) * pupilOffset;
+
+    const eyeOffsets = [-eyeSide, eyeSide];
+    for (let i = 0; i < eyeOffsets.length; i++) {
+      const ey = eyeOffsets[i];
+
+      // Sclère blanche
+      noStroke();
+      fill(255);
+      circle(eyeForward, ey, eyeRadius * 2);
+
+      // Pupille orientée vers la souris
+      fill(15, 23, 42);
+      circle(eyeForward + px, ey + py, pupilRadius * 2);
+
+      // Reflet lumineux
+      fill(255, 255, 255, 210);
+      circle(eyeForward + px - 1.2, ey + py - 1.2, pupilRadius * 0.55);
+    }
+  }
+
+  show() {
+    push();
+    translate(this.pos.x, this.pos.y);
+    rotate(this.heading);
+
+    // Langue fourchue sous la tête
+    this.drawForkedTongue();
+
+    // Tête légèrement ovale orientée dans le sens de marche
+    stroke(167, 243, 208, 220);
+    strokeWeight(2);
+    fill(20, 184, 166);
+    ellipse(this.r * 0.12, 0, this.r * 2.3, this.r * 1.9);
+
+    // Yeux qui suivent la souris
+    this.drawEyes();
+    pop();
+
+    if (Vehicle.debug) {
+      push();
+      stroke(255, 80, 80, 180);
+      strokeWeight(2);
+      line(
+        this.pos.x,
+        this.pos.y,
+        this.pos.x + this.vel.x * 8,
+        this.pos.y + this.vel.y * 8
+      );
+      pop();
+    }
   }
 }

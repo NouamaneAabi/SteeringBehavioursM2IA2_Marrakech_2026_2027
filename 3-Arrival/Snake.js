@@ -1,178 +1,266 @@
 class Snake extends Vehicle {
-  constructor(x, y, ringCount = 30) {
+  constructor(x, y, ringCount = 30, shaderTexture = null) {
     super(x, y);
-    this.spacing = SNAKE_STYLE.ringSpacing;
-    this.waveAmplitude = 7;
-    this.waveFrequency = 0.09;
-    this.waveLength = 0.62;
-    this.ringCount = 0;
-    this.targetRingCount = 0;
-    this.nextGrowthFrame = 0;
-    this.pulseStartedAt = 0;
-    this.head = new SnakeHead(x, y);
+
+    this.headRadius = 22;
+    this.tailRadius = 4;
+
+    this.head = new SnakeHead(x, y, this.headRadius);
     this.rings = [];
-    this.path = [];
+
+    this.ringMaxSpeed = 10;
+    this.ringMaxForce = 2;
+
+    this.shaderTexture = shaderTexture;
+    this.scalesPattern = this.createScalesPattern();
     this.setRingCount(ringCount);
-    this.initializePath();
   }
 
-  initializePath() {
-    this.path = [];
-    for (let index = 0; index < this.ringCount * 12 + 60; index += 1) {
-      this.path.push(createVector(this.head.pos.x - index * this.spacing, this.head.pos.y));
+  createScalesPattern() {
+    // Texture procédurale d'écailles pré-calculée une seule fois hors écran
+    const tile = createGraphics(36, 36);
+    tile.clear();
+    tile.noFill();
+
+    const w = tile.width;
+    const h = tile.height;
+    const cols = 2;
+    const rows = 2;
+    const cellW = w / cols;
+    const cellH = h / rows;
+
+    for (let row = 0; row <= rows; row++) {
+      const offsetX = (row % 2) * (cellW * 0.5);
+      for (let col = -1; col <= cols; col++) {
+        const cx = col * cellW + offsetX;
+        const cy = row * cellH;
+
+        tile.fill(20, 184, 166, 75);
+        tile.stroke(167, 243, 208, 125);
+        tile.strokeWeight(1.2);
+        tile.arc(cx, cy, cellW * 1.05, cellH * 1.15, 0, PI, CHORD);
+
+        tile.noFill();
+        tile.stroke(15, 118, 110, 95);
+        tile.strokeWeight(1);
+        tile.arc(cx, cy, cellW * 0.72, cellH * 0.78, 0.15, PI - 0.15);
+      }
     }
+
+    return drawingContext.createPattern(tile.elt, "repeat");
   }
 
-  setRingCount(ringCount) {
-    const count = Math.max(1, Math.floor(ringCount));
-    const oldRings = this.rings;
-    this.rings = [];
-    this.ringCount = count;
-    this.targetRingCount = count;
+  setRingCount(count) {
+    const targetCount = Math.max(1, Math.floor(count));
 
-    for (let index = 0; index < count; index += 1) {
-      const previous = index === 0 ? this.head : this.rings[index - 1];
-      const direction = previous.vel.magSq() > 0 ? previous.vel.copy().normalize() : createVector(1, 0);
-      const position = previous.pos.copy().sub(direction.mult(this.spacing));
-      const ring = oldRings[index] || new SnakeRing(position.x, position.y, index);
-      ring.index = index;
-      ring.setStyle(index, count);
-      ring.pos.set(position.x, position.y);
-      ring.vel.set(0, 0);
+    while (this.rings.length < targetCount) {
+      const previous = this.rings.length === 0
+        ? this.head
+        : this.rings[this.rings.length - 1];
+      const ring = new SnakeRing(previous.pos.x - 16, previous.pos.y, this.tailRadius);
+      ring.maxSpeed = this.ringMaxSpeed;
+      ring.maxForce = this.ringMaxForce;
+      ring.heading = previous.heading;
       this.rings.push(ring);
     }
-    if (this.path.length > 0) {
-      this.initializePath();
+
+    if (this.rings.length > targetCount) {
+      this.rings.length = targetCount;
     }
+
+    this.updateRingRadii();
   }
 
   grow(amount = 1) {
-    this.targetRingCount += Math.max(1, Math.floor(amount));
-    this.pulseStartedAt = millis();
+    this.setRingCount(this.rings.length + amount);
   }
 
-  addRing() {
-    const index = this.rings.length;
-    const point = this.getPathPoint((index + 1) * this.spacing);
-    const ring = new SnakeRing(point.x, point.y, index);
-    ring.setStyle(index, this.targetRingCount);
-    ring.pulseStartedAt = this.pulseStartedAt;
-    this.rings.push(ring);
-    this.ringCount = this.rings.length;
-  }
-  removeRings(amount = 1) {
-    const nextCount = Math.max(0, this.ringCount - Math.max(1, Math.floor(amount)));
-    this.rings = this.rings.slice(0, nextCount);
-    this.ringCount = this.rings.length;
-    this.targetRingCount = this.ringCount;
-  }
-
-  update(target, obstacles = []) {
-    this.head.boundaryHit = false;
-    if (this.ringCount < this.targetRingCount && frameCount >= this.nextGrowthFrame) {
-      this.addRing();
-      this.nextGrowthFrame = frameCount + 5;
+  removeRingAt(index) {
+    if (index < 0 || index >= this.rings.length) {
+      return false;
     }
-    this.head.follow(target);
-    this.head.rayonZoneDeFreinage = game ? game.difficulty.arrivalRadius : 125;
-    this.head.applyForce(this.head.avoidObstacles(obstacles).mult(WEIGHTS.obstacleAvoidance));
-    this.head.applyForce(this.head.boundaryAvoidance().mult(WEIGHTS.boundaryAvoidance));
+    this.rings.splice(index, 1);
+    this.updateRingRadii();
+    return true;
+  }
+
+  updateRingRadii() {
+    const total = this.rings.length;
+    for (let i = 0; i < total; i++) {
+      const t = (i + 1) / total;
+      this.rings[i].r = lerp(this.headRadius * 0.9, this.tailRadius, t);
+    }
+  }
+
+  setHeadParams(maxSpeed, maxForce) {
+    this.head.maxSpeed = maxSpeed;
+    this.head.maxForce = maxForce;
+  }
+
+  setRingParams(maxSpeed, maxForce) {
+    this.ringMaxSpeed = maxSpeed;
+    this.ringMaxForce = maxForce;
+    for (let i = 0; i < this.rings.length; i++) {
+      this.rings[i].maxSpeed = maxSpeed;
+      this.rings[i].maxForce = maxForce;
+    }
+  }
+
+  applyBehaviors(target) {
+    // Mise à jour séquentielle : chaque maillon suit la position à jour du maillon précédent
+    this.head.applyBehaviors(target);
     this.head.update();
-    this.head.drawSteeringDebug();
-    this.keepInside(this.head);
-    this.path.unshift(this.head.pos.copy());
-    this.path = this.path.slice(0, this.ringCount * 14 + 80);
 
-    for (let index = 0; index < this.rings.length; index += 1) {
-      const ring = this.rings[index];
-      const distanceBack = (index + 1) * this.spacing;
-      const followPoint = this.getPathPoint(distanceBack);
-      const tangent = this.getPathTangent(distanceBack);
-      const normal = createVector(-tangent.y, tangent.x);
-      const wave = sin(frameCount * this.waveFrequency - index * this.waveLength);
-      followPoint.add(normal.mult(wave * this.waveAmplitude));
-      ring.follow(followPoint);
-      ring.pulseStartedAt = this.pulseStartedAt;
-      ring.applyForce(ring.avoidObstacles(obstacles).mult(WEIGHTS.obstacleAvoidance));
+    for (let i = 0; i < this.rings.length; i++) {
+      const leader = i === 0 ? this.head : this.rings[i - 1];
+      const ring = this.rings[i];
+      const gap = (leader.r + ring.r) * 0.7;
+      ring.applyBehaviors(leader, gap);
       ring.update();
-      ring.pos.lerp(followPoint, 0.78);
-      ring.vel = p5.Vector.sub(followPoint, ring.pos);
-      ring.vel.limit(ring.maxSpeed);
-      this.keepInside(ring);
     }
   }
 
-  keepInside(vehicle) {
-    const margin = vehicle.r + 4;
-    const worldWidth = typeof arenaWidth === 'number' ? arenaWidth : width;
-    const worldHeight = typeof arenaHeight === 'number' ? arenaHeight : height;
-    if (vehicle.pos.x < margin) {
-      vehicle.boundaryHit = true;
-      vehicle.pos.x = margin;
-      vehicle.vel.x = Math.abs(vehicle.vel.x);
-    } else if (vehicle.pos.x > worldWidth - margin) {
-      vehicle.boundaryHit = true;
-      vehicle.pos.x = worldWidth - margin;
-      vehicle.vel.x = -Math.abs(vehicle.vel.x);
-    }
-    if (vehicle.pos.y < margin) {
-      vehicle.boundaryHit = true;
-      vehicle.pos.y = margin;
-      vehicle.vel.y = Math.abs(vehicle.vel.y);
-    } else if (vehicle.pos.y > worldHeight - margin) {
-      vehicle.boundaryHit = true;
-      vehicle.pos.y = worldHeight - margin;
-      vehicle.vel.y = -Math.abs(vehicle.vel.y);
-    }
+  update() {
+    this.pos.set(this.head.pos.x, this.head.pos.y);
   }
 
-  getPathPoint(distanceBack) {
-    let travelled = 0;
-    for (let index = 1; index < this.path.length; index += 1) {
-      const current = this.path[index - 1];
-      const previous = this.path[index];
-      const segmentLength = p5.Vector.dist(current, previous);
-      if (travelled + segmentLength >= distanceBack && segmentLength > 0) {
-        const amount = (distanceBack - travelled) / segmentLength;
-        return p5.Vector.lerp(current, previous, amount);
+  buildSmoothBodyContour() {
+    const nodes = [this.head, ...this.rings];
+    const count = nodes.length;
+    if (count < 2) {
+      return null;
+    }
+
+    const leftPts = [];
+    const rightPts = [];
+
+    for (let i = 0; i < count; i++) {
+      const curr = nodes[i];
+      let tx = 0;
+      let ty = 0;
+
+      if (i === 0) {
+        tx = curr.pos.x - nodes[1].pos.x;
+        ty = curr.pos.y - nodes[1].pos.y;
+      } else if (i === count - 1) {
+        tx = nodes[i - 1].pos.x - curr.pos.x;
+        ty = nodes[i - 1].pos.y - curr.pos.y;
+      } else {
+        tx = nodes[i - 1].pos.x - nodes[i + 1].pos.x;
+        ty = nodes[i - 1].pos.y - nodes[i + 1].pos.y;
       }
-      travelled += segmentLength;
+
+      const len = Math.hypot(tx, ty);
+      if (len > 1e-4) {
+        tx /= len;
+        ty /= len;
+      } else {
+        const angle = typeof curr.heading === "number" ? curr.heading : 0;
+        tx = Math.cos(angle);
+        ty = Math.sin(angle);
+      }
+
+      const nx = -ty;
+      const ny = tx;
+      leftPts.push({ x: curr.pos.x + nx * curr.r, y: curr.pos.y + ny * curr.r });
+      rightPts.push({ x: curr.pos.x - nx * curr.r, y: curr.pos.y - ny * curr.r });
     }
-    return this.path[this.path.length - 1].copy();
+
+    // Contour fermé dans le sens horaire : tête -> flanc gauche -> queue -> flanc droit
+    const outline = [...leftPts];
+    for (let i = rightPts.length - 1; i >= 0; i--) {
+      outline.push(rightPts[i]);
+    }
+    return outline;
   }
 
-  getPathTangent(distanceBack) {
-    const before = this.getPathPoint(Math.max(0, distanceBack - 5));
-    const after = this.getPathPoint(distanceBack + 5);
-    const tangent = p5.Vector.sub(after, before);
-    if (tangent.magSq() === 0) return createVector(1, 0);
-    return tangent.normalize();
+  traceSmoothClosedPath(ctx, points) {
+    const n = points.length;
+    if (n < 3) {
+      return;
+    }
+
+    const firstMidX = (points[n - 1].x + points[0].x) * 0.5;
+    const firstMidY = (points[n - 1].y + points[0].y) * 0.5;
+
+    ctx.beginPath();
+    ctx.moveTo(firstMidX, firstMidY);
+    for (let i = 0; i < n; i++) {
+      const curr = points[i];
+      const next = points[(i + 1) % n];
+      const midX = (curr.x + next.x) * 0.5;
+      const midY = (curr.y + next.y) * 0.5;
+      ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+    }
+    ctx.closePath();
   }
 
-  show(target = null) {
+  drawBodySurface() {
+    const outline = this.buildSmoothBodyContour();
+    if (!outline) {
+      return;
+    }
+
+    const ctx = drawingContext;
     push();
-    noFill();
-    stroke(114, 231, 255, SNAKE_STYLE.trailAlpha);
-    strokeWeight(SNAKE_STYLE.trailWeight);
-    beginShape();
-    vertex(this.head.pos.x, this.head.pos.y);
-    for (const ring of this.rings) {
-      vertex(ring.pos.x, ring.pos.y);
+    ctx.save();
+
+    this.traceSmoothClosedPath(ctx, outline);
+
+    // Remplissage semi-transparent du corps
+    ctx.fillStyle = "rgba(13, 148, 136, 0.35)";
+    ctx.fill();
+
+    // Application du shader animé (ou motif d'écailles en repli) à l'intérieur du contour
+    const patternSource = this.shaderTexture ? this.shaderTexture.getCanvasElement() : null;
+    const fillPattern = patternSource
+      ? ctx.createPattern(patternSource, "repeat")
+      : this.scalesPattern;
+
+    if (fillPattern) {
+      ctx.save();
+      ctx.clip();
+      ctx.fillStyle = fillPattern;
+      ctx.fillRect(0, 0, width, height);
+      ctx.restore();
     }
-    endShape();
-    if (Vehicle.debug) {
-      stroke(255, 230, 130, 100);
-      strokeWeight(1);
-      for (let index = 0; index < this.rings.length; index += 1) {
-        const point = this.getPathPoint((index + 1) * this.spacing);
-        circle(point.x, point.y, 5);
-      }
+
+    // Contour lisse semi-transparent
+    ctx.strokeStyle = "rgba(167, 243, 208, 0.72)";
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.stroke();
+
+    ctx.restore();
+    pop();
+  }
+
+  drawConnectorLines() {
+    push();
+    stroke(255, 255, 255, 70);
+    strokeWeight(1.5);
+
+    let prev = this.head;
+    for (let i = 0; i < this.rings.length; i++) {
+      const current = this.rings[i];
+      line(prev.pos.x, prev.pos.y, current.pos.x, current.pos.y);
+      prev = current;
     }
     pop();
+  }
 
-    for (const ring of this.rings) {
-      ring.show();
+  show() {
+    // 1. Squelette semi-transparent (lignes + anneaux) visible en transparence
+    this.drawConnectorLines();
+    for (let i = this.rings.length - 1; i >= 0; i--) {
+      this.rings[i].show();
     }
-    this.head.show(target);
+
+    // 2. Enveloppe lisse semi-transparente avec texture d'écailles
+    this.drawBodySurface();
+
+    // 3. Tête au premier plan
+    this.head.show();
   }
 }
